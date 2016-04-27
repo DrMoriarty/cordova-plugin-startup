@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin
+    xmlns="http://apache.org/cordova/ns/plugins/1.0"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    id="cordova-plugin-startup"
+    version="0.0.1">
+
+    <name>StartUp</name>
+    <description>Cordova plugin custom startup functions</description>
+    <engines>
+        <engine name="cordova" version=">=4.0.0" />
+    </engines>
+	
+    <license>Apache 2.0 License</license>
+    <author>DrMoriarty</author>
+    <keywords>cordova,phonegap,startup,sharing</keywords>
+    <js-module src="www/startup.js" name="StartUp">
+      <clobbers target="StartUp" />
+    </js-module>
+    <!-- ios -->
+    <platform name="ios">
+        <config-file target="config.xml" parent="/*">
+            <feature name="StartUp">
+                <param name="ios-package" value="StartUp"/>
+                <param name="onload" value="true"/>
+            </feature>
+        </config-file>
+
+        <header-file src="src/ios/StartUp.h"/>
+        <source-file src="src/ios/StartUp.m" />
+    </platform>
+
+    <!-- android -->
+    <platform name="android">
+        <config-file target="config.xml" parent="/*">
+            <feature name="StartUp">
+                <param name="android-package" value="ru.orangeapps.startup.StartUp"/>
+                <param name="onload" value="true"/>
+            </feature>
+        </config-file>
+        <framework src="src/android/odnoklassniki-android-sdk" custom="true" />
+        <source-file src="src/android/StartUp.java" target-dir="src/ru/orangeapps/startup/" />
+    </platform>
+
+</plugin>
