@@ -3,6 +3,8 @@
 
 @implementation StartUp {
     NSString *OriginUrl;
+    NSInteger loadingTries;
+    NSDictionary *savedManifest;
 }
 
 - (void)pluginInitialize
@@ -32,6 +34,17 @@
     NSURL *url = [notification object];
 }
 
+-(void)ScriptsLoadingComplete:(CDVInvokedUrlCommand *)command
+{
+    if(!savedManifest) {
+        NSLog(@"No saved manifest!");
+        return;
+    }
+    NSString *run = [savedManifest valueForKey:@"run"];
+    [self runScript:run withBlock:^(id result) {
+    }];
+}
+
 -(void)runScript:(NSString*)script withBlock:(void(^)(id result))block
 {
     if([self.webView isKindOfClass:UIWebView.class]) {
@@ -57,14 +70,19 @@
     }];
 }
 
--(void)pageDidLoaded:(NSNotification*)notification
+-(void)loadingProcess
 {
-    NSLog(@"Page did loaded");
     NSError *err = nil;
-    //NSString *manifest = [NSString stringWithContentsOfURL:[NSURL URLWithString:OriginUrl] encoding:NSUTF8StringEncoding error:&err];
     NSData *manifestData = [NSData dataWithContentsOfURL:[NSURL URLWithString:OriginUrl] options:NSDataReadingUncached error:&err];
     if(err) {
         NSLog(@"Can not download manifest %@: %@", OriginUrl, err);
+        loadingTries -= 1;
+        if(loadingTries >= 0) {
+            [self performSelector:@selector(loadingProcess) withObject:nil afterDelay:0.5f];
+        } else {
+            UIAlertView *av = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Loading error", @"") message:NSLocalizedString(@"Check your Internet connection and try again", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"Ok", @"") otherButtonTitles: nil];
+            [av show];
+        }
         return;
     }
     id manifest = [NSJSONSerialization JSONObjectWithData:manifestData options:0 error:&err];
@@ -74,31 +92,46 @@
     }
     NSLog(@"Manifest: %@", manifest);
     if([manifest isKindOfClass:NSDictionary.class]) {
-        NSString *run = [manifest valueForKey:@"run"];
+        savedManifest = manifest;
         NSDictionary *scripts = [manifest valueForKey:@"scripts"];
-        NSArray *scrAll = [scripts valueForKey:@"all"];
+        NSMutableArray *list = [NSMutableArray new];
         NSArray *scrIos = [scripts valueForKey:@"ios"];
-        for(NSString *scr in scrAll) {
-            [self injectScriptTagWithSrc:scr];
-        }
         for(NSString *scr in scrIos) {
-            [self injectScriptTagWithSrc:scr];
+            //[self injectScriptTagWithSrc:scr];
+            [list addObject:scr];
         }
-        [self runScript:run withBlock:^(id result) {
+        NSArray *scrAll = [scripts valueForKey:@"all"];
+        for(NSString *scr in scrAll) {
+            //[self injectScriptTagWithSrc:scr];
+            [list addObject:scr];
+        }
+//        NSString *run = [manifest valueForKey:@"run"];
+//        [self runScript:run withBlock:^(id result) {
+//        }];
+        NSData *json = [NSJSONSerialization dataWithJSONObject:list options:0 error:&err];
+        if(err) {
+            NSLog(@"Can not serialize to json: %@", list);
+            return;
+        }
+        NSString *param = [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
+        NSString *loadQueue = [NSString stringWithFormat:@"StartUp.LoadScripts(%@)", param];
+        [self runScript:loadQueue withBlock:^(id result) {
+            
         }];
     }
-    return;
-    
-//    NSString *cordovaPath = [[NSBundle mainBundle] pathForResource:@"cordova" ofType:@"js" inDirectory:@"www"];
-//    NSLog(@"try to load cordova from %@", cordovaPath);
-//    NSString *cordovaString = [NSString stringWithContentsOfFile:cordovaPath encoding:NSUTF8StringEncoding error:nil];
-//    [self runScript:cordovaString withBlock:^(id result) {
-//        NSString *cordovaPluginsPath = [[NSBundle mainBundle] pathForResource:@"cordova_plugins" ofType:@"js" inDirectory:@"www"];
-//        NSString *cordovaPluginsScript = [NSString stringWithContentsOfFile:cordovaPluginsPath encoding:NSUTF8StringEncoding error:nil];
-//        [self runScript:cordovaPluginsScript withBlock:^(id result) {
-//            NSLog(@"Cordova plugins list %@", result);
-//        }];
-//    }];
+}
+
+-(void)pageDidLoaded:(NSNotification*)notification
+{
+    NSLog(@"Page did loaded");
+    loadingTries = 3;
+    [self loadingProcess];
+}
+
+-(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    loadingTries = 3;
+    [self loadingProcess];
 }
 
 @end
