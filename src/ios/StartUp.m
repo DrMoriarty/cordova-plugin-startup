@@ -40,7 +40,8 @@
         NSLog(@"No saved manifest!");
         return;
     }
-    NSString *run = [savedManifest valueForKey:@"run"];
+    //NSString *run = [savedManifest valueForKey:@"run"];
+    NSString *run = @"cordova.fireDocumentEvent('startupComplete');";
     [self runScript:run withBlock:^(id result) {
     }];
 }

@@ -25,7 +25,6 @@
                 <param name="onload" value="true"/>
             </feature>
         </config-file>
-
         <header-file src="src/ios/StartUp.h"/>
         <source-file src="src/ios/StartUp.m" />
     </platform>
@@ -38,7 +37,6 @@
                 <param name="onload" value="true"/>
             </feature>
         </config-file>
-        <framework src="src/android/odnoklassniki-android-sdk" custom="true" />
         <source-file src="src/android/StartUp.java" target-dir="src/ru/orangeapps/startup/" />
     </platform>
 
