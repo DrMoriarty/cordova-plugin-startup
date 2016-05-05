@@ -162,14 +162,14 @@ public class StartUp extends CordovaPlugin {
     {
         this.cordova.getActivity().runOnUiThread(new Runnable() {
                 public void run() {
-                    try {
+                    //try {
                         Log.w(TAG, "Start final javascript");
                         //String script = savedManifest.getString("run");
                         String script = "cordova.fireDocumentEvent('startupComplete')";
                         webView.loadUrl("javascript:"+script+";");
-                    } catch (JSONException e) {
-                        Log.e("JSONException", "Error: " + e.toString());
-                    }
+                    //} catch (JSONException e) {
+                        //Log.e("JSONException", "Error: " + e.toString());
+                    //}
                 }
             });
     }
